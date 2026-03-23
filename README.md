@@ -2,6 +2,8 @@
 
 Drive.NET is a Windows desktop automation toolkit built for agentic AI. It exposes .NET desktop applications built with WinForms or WinUI 3+ through Model Context Protocol (MCP), so AI agents — such as GitHub Copilot, Claude, or any MCP-compatible client — can discover processes, inspect UI trees, interact with controls, capture visual evidence, run accessibility analysis, and execute deterministic multi-step UI workflows.
 
+> While the Drive.NET Companion application can detect and partially analyse Flutter applications, they're not yet supported for automation.
+
 While Drive.NET can be used manually through its CLI, it is ideally driven by an agentic AI that can plan, observe, and react to a live desktop application in real time. The MCP server gives the agent a structured, tool-based interface to the full Windows UI Automation surface — no screenshots-only guessing, no pixel matching, and no code injection into the target app.
 
 ## What It Does
