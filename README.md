@@ -110,7 +110,7 @@ The guided and scripted installers now end with a structured failure summary and
 
 ### First Use
 
-1. Start the target WinForms or WinUI application.
+1. Start the target WinForms or WinUI application (or ask your agent to launch it).
 2. Ensure your workspace has a Drive.NET MCP entry.
 3. Ask your AI agent or Copilot to connect and interact with the app.
 
