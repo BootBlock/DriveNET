@@ -395,6 +395,7 @@ Example prompts:
 ---
 
 ## Documentation
+> Coming soon!
 
 - [Detailed Guide](docs/README.md) — installation, architecture, MCP configuration, and operational details
 - [Tool Reference](docs/tool-reference.md) — all MCP tools and CLI commands with parameters, responses, examples, and tips
