@@ -6,6 +6,10 @@ Drive.NET works with any application that exposes a Microsoft UI Automation surf
 
 While Drive.NET can be used manually through its CLI and Companion app, it is ideally driven by an agentic AI that can plan, observe, and react to a live desktop application in real time. The MCP server gives the agent a structured, tool-based interface to the full Windows UI Automation surface.
 
+Drive.NET public releases are proprietary closed-source binaries. They are free for personal use. Commercial use requires a separate paid license.
+
+![Drive.NET Companion — analysis dashboard showing automation readiness score and findings for a connected WinUI 3 application](docs/images/companion-analysis.png)
+
 ## Choose Your Surface
 
 | If you need to... | Use this surface | Why |
@@ -36,6 +40,7 @@ Typical flow for a new user:
 - Connect filters: `processName`, `processId`, `windowTitleRegex`, `executablePath`, `commandLineContains`
 - `connectNewest` / `connectLatest` actions for multi-instance targets
 - Session groups for coordinating multiple connected applications with named roles
+- Terminated-session crash triage through `session status`, including correlated WER dump paths, crash logs, Windows Application event entries, and heuristic exit summaries for the app under test when those artifacts are available
 
 ### Element Querying & Inspection
 
@@ -90,7 +95,10 @@ Typical flow for a new user:
 
 - Capture entire windows or individual elements
 - Base64 inline MCP images for direct AI agent viewing
-- File output as PNG for durable evidence
+- File output as PNG (default, preserves alpha) or JPEG
+- Optional border with configurable thickness and color
+- Optional soft drop shadow for polished documentation screenshots
+- Element padding for contextual surrounding area in element captures
 - Window handle targeting for secondary windows
 
 ### Batch Automation
@@ -117,9 +125,9 @@ Typical flow for a new user:
 - Drain queued events on demand for agent-driven reactive workflows
 - Event-driven alternative to polling for monitoring dynamic UI state
 
-### Automation Analysis & Reporting
+### Analysis & Reporting
 
-21 checks across Automation Readiness and Accessibility Compliance:
+27 checks across Automation Readiness and Accessibility Compliance. DNC022 (small click/touch target) belongs to Accessibility Compliance because it maps to WCAG 2.5.8 target size:
 
 | Code | Check | Severity |
 |---|---|---|
@@ -144,6 +152,12 @@ Typical flow for a new user:
 | DNC019 | Unexpected LabeledBy on static content | Warning |
 | DNC020 | Input name mirrors current value instead of field purpose | Warning |
 | DNC021 | Large framework surface lacks semantic descendants | Warning |
+| DNC022 | Small click/touch target below WCAG 2.5.8 minimum | Warning |
+| DNC023 | Disabled element without accessible explanation | Info |
+| DNC024 | Image without accessible name | Warning |
+| DNC025 | Interactive element excluded from accessibility view | Warning |
+| DNC026 | Stateful control with missing state information | Warning |
+| DNC027 | Window or dialog without accessible name | Error |
 
 - Export as Markdown, JSON, HTML, or SARIF v2.1.0
 - Remediation plan generation with prioritized, framework-specific fix guidance
@@ -188,11 +202,11 @@ Typical flow for a new user:
 | Component | Description |
 |---|---|
 | **MCP Server** | 17 tools, 4 resources, and 3 prompts over stdio transport |
-| **CLI** | 21 one-shot commands for discovery, inspection, interaction, analysis, testing, and more |
+| **CLI** | 22 top-level commands for discovery, inspection, interaction, analysis, testing, and more |
 | **Companion** | WinUI 3 desktop app for interactive analysis, element exploration, code generation, recording, and snapshot comparison |
 | **Helper** | WinUI 3 workspace manager for adding workspaces, checking health, viewing server status, and applying updates |
 | **Analysis Engine** | Shared analysis, report, and snapshot tooling used by MCP, CLI, and Companion |
-| **Copilot Skills** | 12 workspace-scoped skill files for targeted agent guidance |
+| **Copilot Skills** | 19 workspace-scoped skill files for targeted agent guidance |
 | **Installer** | Install, update, uninstall, and artifact cleanup — also available as PowerShell scripts for automated workflows |
 
 ---
@@ -207,16 +221,16 @@ Typical flow for a new user:
 | `session` | Connect to, retarget, or disconnect from a target application | No |
 | `query` | Find/resolve elements, enumerate trees, read properties, grid data, explain selectors | Yes |
 | `inspect` | Exhaustive element info: properties, supported patterns, available actions | Yes |
-| `interact` | Click, type, select, toggle, expand, collapse, drag, mouseMove, sendKeys, clipboard, highlight | No |
-| `wait_for` | Wait for UI conditions with polling or event-driven detection; explain selectors | Yes |
-| `window` | List windows, detect/dismiss blockers, resize, move, minimize, maximize, restore, close | No |
-| `desktop` | Query OS-level monitor bounds, DPI scale, and foreground window | Yes |
-| `capture` | Screenshot windows or elements as base64 inline images or PNG files | No |
-| `batch` | Execute up to 100 query/interact/wait_for/assert steps atomically with variable binding | No |
+| `interact` | Click, type, select, toggle, expand, collapse, drag, mouseMove, hover, moveTo, sendKeys, clipboard, highlight | No |
+| `wait_for` | Wait for UI and window conditions with polling, event-driven detection, child watches, and selector diagnostics | Yes |
+| `window` | List windows, detect/dismiss blockers, resize, move, minimize, maximize, restore, close, and bring windows to front | No |
+| `desktop` | Query OS-level monitor bounds, DPI scale, foreground window, and visible top-level windows | Yes |
+| `capture` | Screenshot windows or elements with optional border, shadow, and PNG/JPEG output | No |
+| `batch` | Execute up to 100 query/interact/wait_for/assert/report steps atomically with variable binding | No |
 | `report` | Run automation analysis and write Markdown/JSON/HTML/SARIF/plan artifacts | No |
 | `snapshot` | Create or compare reusable `.dncsnap` analysis baselines | No |
 | `lifecycle` | Launch, stop, or query the status of a target application | No |
-| `assert` | Evaluate declarative assertions against UI element state, properties, and counts | Yes |
+| `assert` | Evaluate declarative assertions against UI element state, properties, text, counts, help text, and item status | Yes |
 | `secret` | Register, revoke, or clear in-memory secrets for secure data entry | No |
 | `observe` | Subscribe to live UI events (structure, property, focus, invoke) and drain queued changes | Yes |
 | `record` | Record interactions into replayable batch JSON or YAML test suites | No |
@@ -244,29 +258,32 @@ Typical flow for a new user:
 
 Fast one-shot commands that reuse the same core services as the MCP server. Each command opens its own short-lived session when it needs to attach to a process.
 
+Use MCP sessions instead of repeated one-shot CLI commands when you need durable post-crash triage for the application under test. A terminated MCP `session status` response can preserve correlated `crashEvidence` for the failed process instance.
+
 ### Commands
 
 | Command | Description |
 |---|---|
-| `doctor` | Check UI Automation access, report session type and OS details |
+| `doctor` | Check UI Automation access, report session type and OS details, and summarize recent Helper or Companion crash evidence |
 | `discover` | List visible-window processes with optional filters |
 | `pick` | Resolve one deterministic process target and suggest an exact PID for later commands |
-| `desktop` | Query monitors and foreground window |
-| `windows` | List/manage windows: list, blockers, resize, move, minimize, maximize, restore, close, bringToFront |
+| `desktop` | Query monitors, foreground window, or all visible top-level windows |
+| `windows` | List/manage windows: list, blockers, dismissBlocker, resize, move, minimize, maximize, restore, close, bringToFront |
 | `find` | Find matching UI elements with flat or hierarchical selectors |
 | `inspect` | Verbose single-element detail: patterns, value, toggle state |
 | `tree` | Render UI Automation hierarchy with depth/node budgets and truncation hints |
-| `interact` | Perform actions: click, doubleClick, rightClick, type, clear, sendKeys, select, toggle, expand, collapse, scrollIntoView, dragTo, mouseMove, setFocus, highlight, clipboard |
-| `wait_for` | Wait for UI/window conditions with configurable timeout |
-| `batch` | Execute multi-step JSON sequences atomically with variable binding |
+| `interact` | Perform actions: click, doubleClick, rightClick, type, clear, sendKeys, select, toggle, expand, collapse, scrollIntoView, dragTo, mouseMove, hover, moveTo, setFocus, highlight, clipboard |
+| `wait_for` | Wait for UI/window conditions with selector diagnostics and configurable timeout |
+| `batch` | Execute multi-step JSON sequences atomically with variable binding, assertions, and report steps |
 | `playback` | Replay recorded batch JSON or YAML suite/manifest files from one CLI entry point |
-| `capture` | Screenshot windows or elements to PNG |
+| `capture` | Capture a process window or UI element with optional border, drop shadow, and PNG/JPEG encoding |
 | `demo` | Run built-in visual validation flows such as `demo mouse-move` |
 | `report` | Run analysis pipeline and write report artifacts |
 | `snapshot` | Create or compare analysis baselines |
+| `scaffold` | Generate a starter YAML accessibility test suite template |
 | `test` | Run YAML test suites or manifests with structured result output |
 | `lifecycle` | Launch, stop, or query the status of a target application |
-| `assert` | Evaluate declarative assertions against UI element state |
+| `assert` | Evaluate declarative assertions against UI element state, properties, counts, help text, and item status |
 | `observe` | Subscribe to live UI automation events and print them as they arrive |
 | `record` | Record interactions into batch JSON or YAML test suites |
 
@@ -283,6 +300,8 @@ DriveNet.Cli.exe interact --process-name MyApp --action click --automation-id Su
 DriveNet.Cli.exe wait_for --process-name MyApp --condition elementExists --automation-id SuccessLabel
 DriveNet.Cli.exe playback --input recorded.json --process-name MyApp
 DriveNet.Cli.exe capture --process-name MyApp --automation-id SubmitButton
+DriveNet.Cli.exe capture --process-name MyApp --shadow --border-thickness 2 --border-color "#336699"
+DriveNet.Cli.exe capture --process-name MyApp --image-format jpg --output screenshot.jpg
 DriveNet.Cli.exe demo mouse-move --process-name MyApp
 DriveNet.Cli.exe report --process-name MyApp --format markdown
 DriveNet.Cli.exe snapshot create --process-name MyApp --output snapshots/latest.dncsnap
@@ -304,7 +323,7 @@ Deterministic, repeatable UI automation workflows authored in YAML:
 - **Variables**: `saveAs` for element IDs, `save` with JSON path extraction, `${name}` references in later steps
 - **Expectations**: `success`, `count`, `count_gt`, `count_gte`, `contains`, `not_contains`, `property`/`equals`, `exists`, `condition_met`, `file_exists`
 - **Conditional execution**: `when` with variable equality, inequality, and existence checks
-- **Retry policies**: `max_attempts`, `delayMs`, `backoffMs`
+- **Retry policies**: `max_attempts`, `delay_ms`, `backoff_ms`
 - **Timing**: `delay_before_ms`, `delay_after_ms`, `continue_on_failure`
 - **Lifecycle blocks**: `setup`, `teardown`, `finally` / `cleanup` (always runs, even on setup failure)
 - **Reserved variables**: `lastStepIndex`, `lastStepSuccess`, `lastStepSkipped`, `lastStepError`, and per-app variables (`appProcessId`, `appWindowTitle`, etc.)
@@ -324,18 +343,26 @@ tests:
         action: find
         args:
           automation_id: txtUsername
-        save_as: username_field
+        save:
+          username_field: $.items[0].elementId
 
       - tool: interact
         action: type
         args:
-          element_id: ${username_field}
+          element_id: "${username_field}"
           value: "alice@example.com"
+
+      - tool: query
+        action: find
+        args:
+          automation_id: btnLogin
+        save:
+          login_button: $.items[0].elementId
 
       - tool: interact
         action: click
         args:
-          automation_id: btnLogin
+          element_id: "${login_button}"
 
       - tool: wait_for
         args:
@@ -351,6 +378,10 @@ tests:
 
 A standalone WinUI 3 desktop application for interactive accessibility and automation-readiness analysis. Companion provides a visual workbench for exploring, analysing, and testing the UIA surface of any running Windows desktop application.
 
+![Drive.NET Companion — Target Selection showing running processes with window titles, PIDs, HWNDs, and framework detection](docs/images/companion-target-selection.png)
+
+![Drive.NET Companion — Tree Explorer showing a live UIA element hierarchy with element properties and action buttons](docs/images/companion-tree.png)
+
 ### Target Selection & Session
 
 - Hierarchical process/window tree with parent-child grouping and application icons
@@ -359,7 +390,7 @@ A standalone WinUI 3 desktop application for interactive accessibility and autom
 
 ### Analysis
 
-- **21 analysis checks** across Automation Readiness and Accessibility Compliance
+- **27 analysis checks** across Automation Readiness (DNC001-DNC009, DNC016-DNC018) and Accessibility Compliance (DNC010-DNC015, DNC019-DNC022, DNC023-DNC027)
 - **Score tiers**: Gold, Green, Amber, Red, and Inconclusive
 - **Framework detection**: WinForms, WinUI 3, WPF, UWP, Flutter, Electron, Qt, Java/Swing, Win32/MFC — with framework-specific remediation guidance and severity adjustments
 - **Analysis mode toggle**: switch between Automation Readiness and Accessibility Compliance modes
@@ -421,6 +452,10 @@ A standalone WinUI 3 desktop application for interactive accessibility and autom
 
 A standalone WinUI 3 desktop application for managing the Drive.NET installation, workspaces, and server health. Helper launches automatically after installation and is the recommended way to configure and maintain Drive.NET.
 
+![Drive.NET Helper — workspace dashboard showing managed workspaces with health status badges](docs/images/helper-workspaces.png)
+
+![Drive.NET Helper — server status dashboard with live log viewer showing MCP tool invocations](docs/images/helper-server.png)
+
 ### Workspaces
 
 - **Add Workspace** — pick any folder and configure it as a managed workspace
@@ -444,7 +479,7 @@ A standalone WinUI 3 desktop application for managing the Drive.NET installation
 
 ### Doctor
 
-- Run `doctor` diagnostics with formatted output showing environment summary, install root, version, managed workspace count, OS, and architecture
+- Run `doctor` diagnostics with formatted output showing environment summary, install root, version, managed workspace count, OS, architecture, and the latest persisted Helper crash summary when available
 
 ### Updates
 
@@ -481,7 +516,7 @@ Drive.NET is purpose-built so an AI agent can autonomously operate a desktop app
 - **Selector explain** — the agent can verify a selector resolves correctly before committing to a click or wait, reducing wasted actions
 - **Blocker detection** — `window blockers` detects modal dialogs and returns ranked suggested actions (with confidence levels) so the agent can unblock itself
 - **Variable binding in batch** — multi-step workflows can save element IDs and result fields into named variables, enabling data-dependent automation in a single tool call
-- **Copilot skills** — 12 workspace-scoped skills provide domain-specific guidance for discovery, querying, interaction, waiting, capture, reports, snapshots, window management, batch automation, CLI usage, YAML test authoring, and result-json triage
+- **Copilot skills** — 19 workspace-scoped skills provide domain-specific guidance for discovery, desktop metrics, lifecycle control, querying, interaction, waiting, capture, documentation screenshot staging and promotion, assertions, secure secret handling, live observation, recording, reports, snapshots, window management, batch automation, CLI usage, YAML test authoring, and result-json triage
 - **MCP prompts** — three server-hosted prompts (usage, testing, debugging) give the agent contextual guidance without extra configuration
 - **Application branching** — application-specific automation logic (e.g. Firefox, Electron, Win32/MFC) is isolated into branches that enrich discovery, filter instances, and classify blocker surfaces without polluting the generic pipeline
 - **Live observability** — the `observe` tool lets agents subscribe to continuous UI change events (structure changes, property changes, focus changes, invocations) so they can react to UI state transitions without polling
@@ -493,13 +528,21 @@ Drive.NET is purpose-built so an AI agent can autonomously operate a desktop app
 
 ### Install
 
-Download the appropriate Drive.NET bundle for your machine, extract it, and run the installer from PowerShell:
+Download the appropriate Drive.NET release for your machine. For most users, run the setup executable:
+
+```powershell
+.\DriveNet-Setup-win-x64.exe
+```
+
+If you prefer a portable/scripted install, use the zip bundle and run the PowerShell installer from the extracted folder:
 
 ```powershell
 .\Install-DriveNet.ps1
 ```
 
-The guided installer walks you through choosing an install location and optionally configuring your first workspace. By default Drive.NET installs into `%LOCALAPPDATA%\DriveNet` and adds the CLI to the user `PATH`.
+The setup executable supports per-user or per-machine installation, Start Menu shortcuts, an optional desktop shortcut, optional CLI `PATH` registration, silent installs, and in-place upgrades. The portable PowerShell installer remains available for automation and advanced workflows.
+
+By default Drive.NET installs into `%LOCALAPPDATA%\DriveNet` for per-user installs and adds the CLI to the user `PATH` when selected.
 
 After installation, **DriveNet Helper** launches automatically — use it to add workspaces, scan directories, and manage the installation going forward.
 
@@ -514,7 +557,7 @@ Open DriveNet Helper from the install directory at any time. It provides:
 - **Updates** — check for new Drive.NET releases, download and apply them, and refresh workspaces afterward
 - **Uninstall** — clean removal of Drive.NET and workspace configurations
 
-For non-interactive installs or CI/automation, the bundled PowerShell scripts are also available:
+For non-interactive installs, CI, or advanced workspace automation, the bundled PowerShell scripts are also available:
 
 ```powershell
 # Install and configure a workspace in one step (non-interactive)
