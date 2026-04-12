@@ -96,8 +96,9 @@ Typical flow for a new user:
 - Capture entire windows or individual elements
 - Base64 inline MCP images for direct AI agent viewing
 - File output as PNG (default, preserves alpha) or JPEG
-- Optional border with configurable thickness and color
-- Optional soft drop shadow for polished documentation screenshots
+- Optional border with configurable thickness and color (off by default)
+- Optional soft drop shadow (strength 55) for documentation screenshots and examining visual evidence
+- Gradient rainbow backdrop behind acrylic and transparent windows (on by default)
 - Element padding for contextual surrounding area in element captures
 - Window handle targeting for secondary windows
 
@@ -225,7 +226,7 @@ Typical flow for a new user:
 | `wait_for` | Wait for UI and window conditions with polling, event-driven detection, child watches, and selector diagnostics | Yes |
 | `window` | List windows, detect/dismiss blockers, resize, move, minimize, maximize, restore, close, and bring windows to front | No |
 | `desktop` | Query OS-level monitor bounds, DPI scale, foreground window, and visible top-level windows | Yes |
-| `capture` | Screenshot windows or elements with optional border, shadow, and PNG/JPEG output | No |
+| `capture` | Screenshot windows or elements with optional border, shadow, gradient backdrop, and PNG/JPEG output | No |
 | `batch` | Execute up to 100 query/interact/wait_for/assert/report steps atomically with variable binding | No |
 | `report` | Run automation analysis and write Markdown/JSON/HTML/SARIF/plan artifacts | No |
 | `snapshot` | Create or compare reusable `.dncsnap` analysis baselines | No |
@@ -276,7 +277,7 @@ Use MCP sessions instead of repeated one-shot CLI commands when you need durable
 | `wait_for` | Wait for UI/window conditions with selector diagnostics and configurable timeout |
 | `batch` | Execute multi-step JSON sequences atomically with variable binding, assertions, and report steps |
 | `playback` | Replay recorded batch JSON or YAML suite/manifest files from one CLI entry point |
-| `capture` | Capture a process window or UI element with optional border, drop shadow, and PNG/JPEG encoding |
+| `capture` | Capture a process window or UI element with optional border, drop shadow, gradient backdrop, and PNG/JPEG encoding |
 | `demo` | Run built-in visual validation flows such as `demo mouse-move` |
 | `report` | Run analysis pipeline and write report artifacts |
 | `snapshot` | Create or compare analysis baselines |
