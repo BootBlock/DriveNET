@@ -94,6 +94,7 @@ Typical flow for a new user:
 ### Screenshot Capture
 
 - Capture entire windows or individual elements
+- Window captures automatically trim invisible non-client resize borders when DWM reports a tighter visible frame, avoiding opaque black edge bands from raw window-rect capture
 - Base64 inline MCP images for direct AI agent viewing
 - File output as PNG (default, preserves alpha) or JPEG
 - Optional border with configurable thickness and color (off by default)
