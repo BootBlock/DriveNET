@@ -8,7 +8,7 @@ While Drive.NET can be used manually through its CLI and Companion app, it is id
 
 Drive.NET public releases are proprietary closed-source binaries. They are free for personal use. Commercial use requires a separate paid license.
 
-The Companion analysis dashboard scores a connected application's automation readiness and surfaces actionable accessibility findings:
+_The Companion analysis dashboard scores a connected application's automation readiness and surfaces actionable accessibility findings:_
 
 ![Drive.NET Companion — analysis dashboard showing automation readiness score and findings for a connected WinUI 3 application](docs/images/companion-analysis.png)
 
@@ -382,11 +382,11 @@ tests:
 
 A standalone WinUI 3 desktop application for interactive accessibility and automation-readiness analysis. Companion provides a visual workbench for exploring, analysing, and testing the UIA surface of any running Windows desktop application.
 
-The Target Selection page lists running processes with framework detection, window titles, and per-window targeting:
+_The Target Selection page lists running processes with framework detection, window titles, and per-window targeting:_
 
 ![Drive.NET Companion — Target Selection showing running processes with window titles, PIDs, HWNDs, and framework detection](docs/images/companion-target-selection.png)
 
-The Tree Explorer provides a live UIA element hierarchy with search, element properties, and interactive action buttons:
+_The Tree Explorer provides a live UIA element hierarchy with search, element properties, and interactive action buttons:_
 
 ![Drive.NET Companion — Tree Explorer showing a live UIA element hierarchy with element properties and action buttons](docs/images/companion-tree.png)
 
@@ -460,11 +460,11 @@ The Tree Explorer provides a live UIA element hierarchy with search, element pro
 
 A standalone WinUI 3 desktop application for managing the Drive.NET installation, workspaces, and server health. Helper launches automatically after installation and is the recommended way to configure and maintain Drive.NET.
 
-The Workspaces dashboard shows all managed workspaces at a glance with health status badges:
+_The Workspaces dashboard shows all managed workspaces at a glance with health status badges:_
 
 ![Drive.NET Helper — workspace dashboard showing managed workspaces with health status badges](docs/images/helper-workspaces.png)
 
-The Server Status page provides a live log viewer with real-time MCP tool invocations and session activity:
+_The Server Status page provides a live log viewer with real-time MCP tool invocations and session activity:_
 
 ![Drive.NET Helper — server status dashboard with live log viewer showing MCP tool invocations](docs/images/helper-server.png)
 
